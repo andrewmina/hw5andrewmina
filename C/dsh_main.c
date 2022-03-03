@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
 	/* Create input window on the left with heading */
 	mvwprintw(stdscr, WIN_START_Y - 2, WIN1_START_X, "%s", "Typing Window");
 	WINDOW *input = newwin(WIN_HEIGHT, WIN_WIDTH, WIN_START_Y, WIN1_START_X);
+	keypad(input, true);
 
 	
 
@@ -68,9 +69,11 @@ int main(int argc, char** argv) {
 	int input_x  = 1;
 
 	char line[100];
+	int arrowPosition = 0;
 	int lineCounter = 0;
 	int cmdCounter = 0;
 	//memset(line, 0, sizeof line);
+	char history[100][100]; // 2d array of strings char strs[NUMBER_OF_STRINGS][STRING_LENGTH+1];
 	mvwprintw(input, input_y, input_x, "%s", "dsh> " );
 	while(1) {
 		/* Go to next line if width is exhausted */
@@ -86,7 +89,7 @@ int main(int argc, char** argv) {
 		inputChar = wgetch(input);
 
 
-		if (inputChar == 127) {
+		if (inputChar == KEY_BACKSPACE) {
 			//inputChar = '\0';
 			mvwprintw(input,input_y,input_x-1+5,"%c", ' ');
 			
@@ -108,7 +111,14 @@ int main(int argc, char** argv) {
 			//lineCounter++;
 			//char* temp = line;
 			mvwprintw(input, input_y+1+cmdCounter, 2, "%d: %s",cmdCounter, line);
+			for (int i = 0; i < strlen(line); i++) {  // record the command in the history
+				history[cmdCounter][i] = line[i];
+			}
+			
 			line[lineCounter] = ' ';
+			for (int i = 6; i < 64; i++) {
+				mvwprintw(input, 1, i, "%c",' ');
+			}
 
 			
 			
@@ -122,6 +132,64 @@ int main(int argc, char** argv) {
 			
 			//mvwprintw(input,input_y+1+cmdCounter, input_x, "%s", line);
 			cmdCounter++;
+			arrowPosition = cmdCounter;
+		} else if (inputChar == KEY_UP) {
+			// for (int i = 6; i < 64; i++) {
+			// 	mvwprintw(input, 1, i, "%c",' ');
+			// }
+			wclrtoeol(input);
+			box(input,0,0);
+			refresh();
+			// arrowPosition = cmdCounter;
+			if(arrowPosition > 0) {
+				arrowPosition--;
+			}
+			
+			// wrefresh(input);
+			// //mvwprintw(input,input_y,input_x + 5,"%s",history[arrowPosition]);
+			// for (int i = 0;i < strlen(history[arrowPosition]); i++){
+			// 	mvwaddch(input,input_y,input_x + 5+i,history[arrowPosition][i]);
+			// }
+			// wmove(input, 1, input_x + 5 +strlen(history[arrowPosition]));
+			wmove(input, input_y, input_x+5);
+			waddstr(input, history[arrowPosition]);
+			wrefresh(input);
+			
+			
+
+			
+
+
+		} else if (inputChar == KEY_DOWN) {
+			// for (int i = 6; i < 64; i++) {
+			// 	mvwprintw(input, 1, i, "%c",' ');
+			// }
+			wclrtoeol(input);
+			box(input,0,0);
+			refresh();
+			//wrefresh(input);
+			
+			if(arrowPosition < cmdCounter){
+				arrowPosition++;
+			}
+			wmove(input, input_y, input_x+5);
+			waddstr(input, history[arrowPosition]);
+			wrefresh(input);
+
+			
+			// wrefresh(input);
+			// for (int i = 0;i < strlen(history[arrowPosition]); i++){
+			// 	mvwaddch(input,input_y,input_x + 5 +i,history[arrowPosition][i]);
+			// }
+
+			// wmove(input, 1, input_x + 5 +strlen(history[arrowPosition]));
+			
+			
+			
+			
+			
+
+			
 		} else {
 			prevChar = inputChar;
 			line[lineCounter] = inputChar;
