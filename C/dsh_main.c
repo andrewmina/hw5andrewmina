@@ -107,22 +107,85 @@ int main(int argc, char** argv) {
 			refresh();
 
 		} else if (inputChar == '\n') {
+			
 			//printf("the line is: %s", line);
 			//lineCounter++;
 			//char* temp = line;
-			mvwprintw(input, input_y+1+cmdCounter, 2, "%d: %s",cmdCounter, line);
+
 			for (int i = 0; i < strlen(line); i++) {  // record the command in the history
-				history[cmdCounter][i] = line[i];
+				history[cmdCounter][i] = line[i];  // records current line
+			}
+
+			for(int i = 0; i < strlen(history[arrowPosition]); i++) {
+				history[cmdCounter][i] = history[arrowPosition][i];
 			}
 			
-			line[lineCounter] = ' ';
-			for (int i = 6; i < 64; i++) {
-				mvwprintw(input, 1, i, "%c",' ');
+			//history[cmdCounter][strlen(history[cmdCounter]+1)] = ' ';
+			//memset(history[cmdCounter], 0, sizeof history[cmdCounter]);
+			for (int i = 0; i < strlen(line)+1; i++) {  // record the command in the history
+				if(arrowPosition == cmdCounter){
+					history[cmdCounter][i+strlen(history[arrowPosition])] = line[i];
+				} else {
+					history[cmdCounter][i+strlen(history[arrowPosition])] = line[i];
+				}
+				
+				
 			}
+			// if (strlen(history[]) == 0) {
+			// 	history[cmdCounter][strlen(history[cmdCounter]+1)] =history[cmdCounter][strlen(history[cmdCounter])];
+			// }
+			if (arrowPosition == cmdCounter) {
+				//history[cmdCounter][strlen(history[cmdCounter]+1)] =history[cmdCounter][strlen(history[cmdCounter])];
+				history[cmdCounter][strlen(history[arrowPosition]+1)] = ' ';
+			}
+			
 
 			
 			
-			dsh_run(line);
+			
+			mvwprintw(input, input_y+1+cmdCounter, 2, "%d: %s",cmdCounter, history[cmdCounter]);
+
+			// if (arrowPosition == 0){
+				// for (int i = 0; i < strlen(line); i++) {  // record the command in the history
+				// 	history[cmdCounter][i] = line[i];
+				// }
+			// }else {
+
+				// for(int i = 0; i < strlen(history[arrowPosition]); i++) {
+				// 	history[cmdCounter][i] = history[arrowPosition][i];
+				// }
+				// for (int i = 0; i < strlen(line); i++) {  // record the command in the history
+				// 	history[cmdCounter][i+strlen(history[arrowPosition])] = line[i];
+					
+				// }
+				// memset(line, 0, sizeof line);
+				// for (int i = 0; i < strlen(history[cmdCounter]); i++) {
+				// 	line[i] = history[cmdCounter][i];
+				// }
+			// }
+
+			//mvwgetnstr(input, 1, 6, history[cmdCounter], strlen(line));
+			
+			
+			// for (int i = 6; i < 64; i++) {
+			// 	mvwprintw(input, 1, i, "%c",' ');
+			// }
+			///
+			wmove(input, 1, 6); //clearing
+			wclrtoeol(input);
+			box(input,0,0);
+			refresh();
+			for (int i = 0; i < cmdCounter; i++) { // debolding
+				mvwprintw(input, input_y+1+i, 2, "%d: %s",i, history[i]);
+			}
+
+
+
+			///
+
+			
+			//line[lineCounter] = ' '; // add new line charecter
+			dsh_run(history[cmdCounter]);
 			memset(line, 0, sizeof line);
 			lineCounter = 0;
 
@@ -134,16 +197,27 @@ int main(int argc, char** argv) {
 			cmdCounter++;
 			arrowPosition = cmdCounter;
 		} else if (inputChar == KEY_UP) {
-			// for (int i = 6; i < 64; i++) {
-			// 	mvwprintw(input, 1, i, "%c",' ');
-			// }
-			wclrtoeol(input);
+			wmove(input, input_y, 6);
+			
+			wclrtoeol(input);//clearing
 			box(input,0,0);
 			refresh();
-			// arrowPosition = cmdCounter;
+			for (int i = 0; i < cmdCounter; i++) { // debolding
+				mvwprintw(input, input_y+1+i, 2, "%d: %s",i, history[i]);
+			}
+			
+			
+			// operation for bolding current command we are on
 			if(arrowPosition > 0) {
 				arrowPosition--;
 			}
+			if(arrowPosition != cmdCounter-1){
+				mvwprintw(input, input_y+1+arrowPosition+1, 2, "%d: %s",arrowPosition+1, history[arrowPosition+1]);
+			}
+			wattron(input, A_BOLD); // bolding
+			mvwprintw(input, input_y+1+arrowPosition, 2, "%d: %s",arrowPosition, history[arrowPosition]);
+			wattroff(input, A_BOLD);
+			
 			
 			// wrefresh(input);
 			// //mvwprintw(input,input_y,input_x + 5,"%s",history[arrowPosition]);
@@ -151,9 +225,18 @@ int main(int argc, char** argv) {
 			// 	mvwaddch(input,input_y,input_x + 5+i,history[arrowPosition][i]);
 			// }
 			// wmove(input, 1, input_x + 5 +strlen(history[arrowPosition]));
-			wmove(input, input_y, input_x+5);
+
+			
+
+			wmove(input, input_y, 6);
+			input_x=strlen(history[arrowPosition])+1;
 			waddstr(input, history[arrowPosition]);
+			memset(line, 0, sizeof line);
+			for (int i = 0; i < strlen(history[arrowPosition]); i++){
+				line[i] = history[arrowPosition][i];
+			}
 			wrefresh(input);
+			
 			
 			
 
@@ -161,19 +244,39 @@ int main(int argc, char** argv) {
 
 
 		} else if (inputChar == KEY_DOWN) {
-			// for (int i = 6; i < 64; i++) {
-			// 	mvwprintw(input, 1, i, "%c",' ');
-			// }
+			wmove(input, input_y, 6);
+			
 			wclrtoeol(input);
 			box(input,0,0);
 			refresh();
+
+			for (int i = 0; i < cmdCounter; i++) {  // debolding
+				mvwprintw(input, input_y+1+i, 2, "%d: %s",i, history[i]);
+			}
 			//wrefresh(input);
 			
-			if(arrowPosition < cmdCounter){
+			if(arrowPosition < cmdCounter-1){
 				arrowPosition++;
 			}
-			wmove(input, input_y, input_x+5);
+
+			// Operation for bolding the correct command we are on
+			if(arrowPosition != cmdCounter){
+				mvwprintw(input, input_y+1+arrowPosition-1, 2, "%d: %s",arrowPosition-1, history[arrowPosition-1]);
+			}
+			if (arrowPosition != 0){
+				wattron(input, A_BOLD);
+				mvwprintw(input, input_y+1+arrowPosition, 2, "%d: %s",arrowPosition, history[arrowPosition]);
+				wattroff(input, A_BOLD);
+			}
+
+			wmove(input, input_y, 6);
 			waddstr(input, history[arrowPosition]);
+			input_x=strlen(history[arrowPosition])+1;
+			memset(line, 0, sizeof line);
+			for (int i = 0; i < strlen(history[arrowPosition]); i++){
+				line[i] = history[arrowPosition][i];
+			}
+			
 			wrefresh(input);
 
 			
